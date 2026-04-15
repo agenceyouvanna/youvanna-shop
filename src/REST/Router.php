@@ -16,5 +16,9 @@ final class Router
         (new CheckoutController())->register_routes();
         (new OrdersController())->register_routes();
         (new WebhooksController())->register_routes();
+        (new VariationsController())->register_routes();
+        (new CouponsController())->register_routes();
+        (new ReviewsController())->register_routes();
+        (new WishlistController())->register_routes();
     }
 }

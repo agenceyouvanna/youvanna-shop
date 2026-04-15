@@ -47,6 +47,9 @@ final class Plugin
             \WP_CLI::add_command('yv-shop', CLI\Commands::class);
         }
 
+        // Taxonomies enregistrées partout (admin + frontend + REST) pour que edit-tags.php et REST categories/tags fonctionnent
+        add_action('init', [$this->container->get(Frontend\Router::class), 'registerTaxonomies'], 5);
+
         // Frontend conditionnel
         if (!is_admin() && !wp_doing_ajax() && !wp_doing_cron()) {
             $this->container->get(Frontend\Router::class)->register();

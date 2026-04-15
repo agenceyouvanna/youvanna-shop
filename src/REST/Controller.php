@@ -33,17 +33,42 @@ abstract class Controller
     {
         $origin = $req->get_header('origin');
         if (!$origin) {
-            return true; // same-origin without Origin header
+            return true;
         }
         $allowed = apply_filters('yv_shop_allowed_origins', [home_url()]);
-        $origin_host = parse_url($origin, PHP_URL_HOST);
+        $origin_parts = parse_url($origin);
+        if (!$origin_parts || empty($origin_parts['host'])) return false;
+        $origin_scheme = strtolower($origin_parts['scheme'] ?? '');
+        $origin_host = strtolower($origin_parts['host']);
+        $origin_port = $origin_parts['port'] ?? null;
         foreach ((array) $allowed as $a) {
-            $a_host = parse_url($a, PHP_URL_HOST);
-            if ($a_host && $origin_host && strcasecmp($a_host, $origin_host) === 0) {
-                return true;
-            }
+            $a_parts = parse_url((string) $a);
+            if (!$a_parts || empty($a_parts['host'])) continue;
+            if (strtolower($a_parts['scheme'] ?? '') !== $origin_scheme) continue;
+            if (strtolower($a_parts['host']) !== $origin_host) continue;
+            if (($a_parts['port'] ?? null) != $origin_port) continue;
+            return true;
         }
         return false;
+    }
+
+    protected function sessionToken(): string
+    {
+        $cookie = $_COOKIE['yv_shop_session'] ?? '';
+        if (!$cookie || strlen($cookie) !== 64) {
+            $cookie = bin2hex(random_bytes(32));
+            if (!headers_sent()) {
+                setcookie('yv_shop_session', $cookie, [
+                    'expires' => time() + 60 * 60 * 24 * 180,
+                    'path' => '/',
+                    'secure' => is_ssl(),
+                    'httponly' => true,
+                    'samesite' => 'Lax',
+                ]);
+            }
+            $_COOKIE['yv_shop_session'] = $cookie;
+        }
+        return $cookie;
     }
 
     protected function rateLimit(string $key, int $max, int $window = 60): bool

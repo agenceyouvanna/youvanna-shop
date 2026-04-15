@@ -11,13 +11,20 @@ final class Router
 
     public function register(): void
     {
-        add_action('init', [$this, 'registerTaxonomies'], 5);
+        // Taxonomies now registered centrally in Plugin.php (needed in admin too)
         add_action('init', [$this, 'registerRewriteRules'], 10);
         add_filter('query_vars', [$this, 'queryVars']);
         add_action('template_redirect', [$this, 'detectContext'], 5);
         add_action('wp_enqueue_scripts', [$this, 'enqueue'], 20);
         add_filter('template_include', [$this, 'maybeOverrideTemplate'], 99);
         add_filter('document_title_parts', [$this, 'titleParts']);
+        add_filter('pre_get_document_title', [$this, 'preGetTitle'], 999);
+        add_filter('wpseo_title', [$this, 'yoastTitle'], 999);
+        add_filter('wpseo_metadesc', [$this, 'yoastMetaDesc'], 999);
+        add_filter('wpseo_opengraph_title', [$this, 'yoastTitle'], 999);
+        add_filter('wpseo_opengraph_desc', [$this, 'yoastMetaDesc'], 999);
+        add_filter('wpseo_canonical', [$this, 'yoastCanonical'], 999);
+        add_action('wp', [$this, 'fixMainQuery'], 5);
         add_action('wp_head', [$this, 'cartSessionPreloader'], 1);
 
         (new Shortcodes())->register();
@@ -182,11 +189,93 @@ final class Router
     public function titleParts(array $parts): array
     {
         if ($this->context === 'archive') {
-            $parts['title'] = __('Boutique', 'yv-shop');
+            $parts['title'] = $this->archiveTitle();
         } elseif ($this->context === 'single' && !empty($GLOBALS['yv_shop_current_product'])) {
             $parts['title'] = $GLOBALS['yv_shop_current_product']->name;
         }
         return $parts;
+    }
+
+    public function preGetTitle($title)
+    {
+        $computed = $this->computeFullTitle();
+        return $computed ?: $title;
+    }
+
+    public function yoastTitle($title)
+    {
+        $computed = $this->computeFullTitle();
+        return $computed ?: $title;
+    }
+
+    public function yoastMetaDesc($desc)
+    {
+        if ($this->context === 'archive') {
+            $override = (string) get_option('yv_shop_archive_meta_desc', '');
+            if ($override) return $override;
+            return sprintf(__('Découvrez notre collection %s. Livraison rapide et retours gratuits.', 'yv-shop'), get_bloginfo('name'));
+        }
+        if ($this->context === 'single' && !empty($GLOBALS['yv_shop_current_product'])) {
+            $p = $GLOBALS['yv_shop_current_product'];
+            if (!empty($p->meta_description)) return (string) $p->meta_description;
+            $excerpt = wp_strip_all_tags((string) ($p->short_description ?? $p->description ?? ''));
+            if ($excerpt) return mb_substr($excerpt, 0, 155);
+        }
+        return $desc;
+    }
+
+    public function yoastCanonical($canonical)
+    {
+        if ($this->context === 'archive') {
+            return home_url('/' . trim((string) get_option('yv_shop_general_shop_slug', 'boutique'), '/') . '/');
+        }
+        if ($this->context === 'single' && !empty($GLOBALS['yv_shop_current_product'])) {
+            $slug = trim((string) get_option('yv_shop_general_product_slug', 'produit'), '/');
+            return home_url('/' . $slug . '/' . $GLOBALS['yv_shop_current_product']->slug . '/');
+        }
+        return $canonical;
+    }
+
+    public function fixMainQuery(): void
+    {
+        if (!$this->context) return;
+        global $wp_query;
+        // Prevent WP from treating our shop URLs as search/404/blog
+        if (isset($wp_query)) {
+            $wp_query->is_search = false;
+            $wp_query->is_home = false;
+            $wp_query->is_404 = false;
+            $wp_query->is_singular = false;
+            $wp_query->is_page = false;
+            $wp_query->is_archive = ($this->context === 'archive');
+            $wp_query->is_single = ($this->context === 'single');
+            $wp_query->set('s', '');
+        }
+    }
+
+    private function archiveTitle(): string
+    {
+        if ($this->current_category_id) {
+            $term = get_term($this->current_category_id, 'yv_category');
+            if ($term && !is_wp_error($term)) return (string) $term->name;
+        }
+        return (string) (get_option('yv_shop_archive_title') ?: __('Boutique', 'yv-shop'));
+    }
+
+    private function computeFullTitle(): string
+    {
+        if (!$this->context) return '';
+        $sep = ' - ';
+        $site = get_bloginfo('name');
+        if ($this->context === 'archive') {
+            return $this->archiveTitle() . $sep . $site;
+        }
+        if ($this->context === 'single' && !empty($GLOBALS['yv_shop_current_product'])) {
+            $p = $GLOBALS['yv_shop_current_product'];
+            $seo = !empty($p->meta_title) ? (string) $p->meta_title : (string) $p->name;
+            return $seo . $sep . $site;
+        }
+        return '';
     }
 
     public function cartSessionPreloader(): void

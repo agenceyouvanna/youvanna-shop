@@ -14,11 +14,15 @@ final class PriceCalculator
 {
     private ProductRepository $products;
     private TaxResolver $tax;
+    private CouponEngine $coupons;
+    private ShippingResolver $shipping;
 
-    public function __construct(?ProductRepository $products = null, ?TaxResolver $tax = null)
+    public function __construct(?ProductRepository $products = null, ?TaxResolver $tax = null, ?CouponEngine $coupons = null, ?ShippingResolver $shipping = null)
     {
         $this->products = $products ?? new ProductRepository();
         $this->tax = $tax ?? new TaxResolver();
+        $this->coupons = $coupons ?? new CouponEngine();
+        $this->shipping = $shipping ?? new ShippingResolver();
     }
 
     /**
@@ -73,18 +77,30 @@ final class PriceCalculator
                 'line_tax'      => $line_tax,
                 'line_total'    => $line_subtotal,
                 'tax_class'     => $product->tax_class,
+                'on_sale'       => $product->isOnSale(),
             ];
             $subtotal += $line_subtotal;
             $tax_total += $line_tax;
         }
 
         // Discount via coupons
-        $discount_total = 0.0; // V0 : pas de coupons appliqués
+        $discount_total = 0.0;
+        $coupon_codes = array_values(array_filter((array) ($context['coupon_codes'] ?? [])));
+        $applied_coupons = [];
+        $free_shipping = false;
+        $coupon_errors = [];
+        if (!empty($coupon_codes)) {
+            $res = $this->coupons->apply($resolved_items, $coupon_codes, $context['customer_email'] ?? null, $subtotal);
+            $discount_total = $res['discount'];
+            $applied_coupons = $res['applied'];
+            $free_shipping = $res['free_shipping'];
+            $coupon_errors = $res['errors'];
+        }
 
         // Shipping
         $shipping_total = 0.0;
-        if (!empty($context['shipping_method'])) {
-            $shipping_total = (new ShippingResolver())->resolve($context['shipping_method'], $subtotal, $country);
+        if (!empty($context['shipping_method']) && !$free_shipping) {
+            $shipping_total = $this->shipping->resolve($context['shipping_method'], $subtotal, $country);
         }
 
         if ($tax_mode === 'incl') {
@@ -107,6 +123,11 @@ final class PriceCalculator
             'items'       => $resolved_items,
             'totals'      => $totals,
             'validations' => $validations,
+            'coupons'     => [
+                'applied'       => $applied_coupons,
+                'free_shipping' => $free_shipping,
+                'errors'        => $coupon_errors,
+            ],
         ], $items, $context);
     }
 }
