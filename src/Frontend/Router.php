@@ -129,11 +129,11 @@ final class Router
 
     public function enqueue(): void
     {
-        if (!$this->context) {
-            return;
-        }
         $base = YV_SHOP_URL . 'assets/dist/';
         $ver = YV_SHOP_VERSION;
+
+        // Base CSS + store + mini-cart drawer are loaded on EVERY frontend page
+        // so the cart icon in the theme header works sitewide (not just yv-shop contexts).
         wp_enqueue_style('yv-shop-base', $base . 'shop.css', [], $ver);
         $script_data = [
             'rest_url'         => esc_url_raw(rest_url('yv-shop/v1/')),
@@ -151,10 +151,17 @@ final class Router
                 'empty_cart'      => __('Votre panier est vide', 'yv-shop'),
                 'continue'        => __('Continuer mes achats', 'yv-shop'),
                 'checkout'        => __('Commander', 'yv-shop'),
+                'view_cart'       => __('Voir mon panier', 'yv-shop'),
                 'subtotal'        => __('Sous-total', 'yv-shop'),
                 'shipping'        => __('Livraison', 'yv-shop'),
+                'shipping_note'   => __('Livraison et taxes calculées au paiement.', 'yv-shop'),
                 'tax'             => __('TVA', 'yv-shop'),
                 'total'           => __('Total', 'yv-shop'),
+                'cart'            => __('Votre panier', 'yv-shop'),
+                'close'           => __('Fermer', 'yv-shop'),
+                'increase'        => __('Augmenter', 'yv-shop'),
+                'decrease'        => __('Diminuer', 'yv-shop'),
+                'custom_lens'     => __('Verres configurés', 'yv-shop'),
             ],
         ];
         wp_register_script('yv-shop-store', $base . 'store.js', [], $ver, true);
@@ -162,6 +169,10 @@ final class Router
         wp_enqueue_script('yv-shop-store');
 
         wp_enqueue_script('yv-shop-mini-cart', $base . 'mini-cart.js', ['yv-shop-store'], $ver, true);
+
+        if (!$this->context) {
+            return;
+        }
 
         if ($this->context === 'archive') {
             wp_enqueue_script('yv-shop-archive', $base . 'shop.js', ['yv-shop-store'], $ver, true);
