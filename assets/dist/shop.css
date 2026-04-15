@@ -576,38 +576,51 @@ a.yv-shop-card__link:hover .yv-shop-card { transform: translateY(-2px); }
 .yv-shop-mini-cart-count.is-empty { display: none; }
 
 /* ---- Cart toggle (header icon) ---- */
+button.yv-shop-cart-toggle,
 .yv-shop-cart-toggle {
+    -webkit-appearance: none;
+    appearance: none;
     display: inline-flex;
     align-items: center;
     justify-content: center;
     position: relative;
+    box-sizing: border-box;
     width: 40px;
     height: 40px;
+    padding: 0;
+    margin: 0;
     border: 0;
     background: transparent;
     color: inherit;
     cursor: pointer;
-    padding: 0;
     border-radius: 999px;
+    line-height: 1;
     transition: background 0.15s;
 }
 .yv-shop-cart-toggle:hover { background: rgba(0,0,0,0.06); }
-.yv-shop-cart-toggle svg { width: 22px; height: 22px; }
+.yv-shop-cart-toggle > svg {
+    width: 22px;
+    height: 22px;
+    display: block;
+    flex-shrink: 0;
+}
 .yv-shop-cart-toggle__count {
     position: absolute;
-    top: 2px;
-    right: 2px;
+    top: -2px;
+    right: -4px;
     min-width: 18px;
     height: 18px;
     padding: 0 5px;
+    box-sizing: border-box;
     border-radius: 9px;
-    background: var(--color-primary, var(--yv-shop-color-primary));
+    background: var(--color-primary, var(--yv-shop-color-primary, #222));
     color: var(--color-primary-contrast, var(--yv-shop-color-primary-contrast, #fff));
     font-size: 11px;
     font-weight: 700;
     line-height: 18px;
     text-align: center;
     pointer-events: none;
+    border: 2px solid var(--color-background, #fff);
 }
 .yv-shop-cart-toggle__count.is-empty { display: none; }
 

@@ -14,6 +14,7 @@ final class Router
         // Taxonomies now registered centrally in Plugin.php (needed in admin too)
         add_action('init', [$this, 'registerRewriteRules'], 10);
         add_filter('query_vars', [$this, 'queryVars']);
+        add_action('template_redirect', [$this, 'legacyProductRedirect'], 1);
         add_action('template_redirect', [$this, 'detectContext'], 5);
         add_action('wp_enqueue_scripts', [$this, 'enqueue'], 20);
         add_filter('template_include', [$this, 'maybeOverrideTemplate'], 99);
@@ -86,6 +87,23 @@ final class Router
         $vars[] = 'yv_shop_product';
         $vars[] = 'yv_category';
         return $vars;
+    }
+
+    public function legacyProductRedirect(): void
+    {
+        $path = (string) parse_url((string) ($_SERVER['REQUEST_URI'] ?? ''), PHP_URL_PATH);
+        $path = '/' . ltrim($path, '/');
+        if (!preg_match('#^/produit/([^/]+)/?$#i', $path, $m)) {
+            return;
+        }
+        $shop = trim((string) get_option('yv_shop_general_shop_slug', 'boutique'), '/');
+        $product = trim((string) get_option('yv_shop_general_product_slug', 'boutique'), '/');
+        if ($product === 'produit') {
+            return; // the canonical slug is still /produit/, nothing to redirect
+        }
+        $target = home_url('/' . $product . '/' . rawurlencode($m[1]) . '/');
+        wp_safe_redirect($target, 301);
+        exit;
     }
 
     public function detectContext(): void
