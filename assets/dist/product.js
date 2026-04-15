@@ -14,6 +14,22 @@
         });
     });
 
+    // Quantity +/- buttons
+    d.addEventListener('click', function (e) {
+        var btn = e.target.closest('[data-qty-dec], [data-qty-inc]');
+        if (!btn) return;
+        var input = btn.parentElement.querySelector('input[type="number"]');
+        if (!input) return;
+        var min = parseInt(input.min || '1', 10);
+        var max = input.max ? parseInt(input.max, 10) : Infinity;
+        var cur = parseInt(input.value || String(min), 10) || min;
+        var next = btn.hasAttribute('data-qty-inc') ? cur + 1 : cur - 1;
+        if (next < min) next = min;
+        if (next > max) next = max;
+        input.value = next;
+        input.dispatchEvent(new Event('change', { bubbles: true }));
+    });
+
     d.addEventListener('submit', function (e) {
         var form = e.target.closest('form[data-yv-shop-add-form]');
         if (!form) return;

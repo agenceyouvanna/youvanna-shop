@@ -171,6 +171,66 @@
         });
     }
 
+    // ---- Conditional fields (show when toggle/select/input) ----
+    function initConditionals(root) {
+        var $root = $(root);
+
+        function updateShowWhen(name) {
+            // checkbox-based (data-show-when="fieldname")
+            var $checkbox = $root.find('[name="' + name + '"][type="checkbox"]');
+            if (!$checkbox.length) return;
+            var on = $checkbox.is(':checked');
+            $root.find('[data-show-when="' + name + '"]').each(function(){
+                $(this).toggleClass('is-hidden', !on);
+            });
+        }
+
+        function updateShowWhenFilled(name) {
+            var $input = $root.find('[name="' + name + '"]');
+            if (!$input.length) return;
+            var has = ($input.val() || '').toString().trim() !== '';
+            $root.find('[data-show-when-filled="' + name + '"]').each(function(){
+                $(this).toggleClass('is-hidden', !has);
+            });
+        }
+
+        function updateShowWhenValue(spec) {
+            // spec like "tax_status=taxable"
+            var parts = spec.split('=');
+            if (parts.length !== 2) return;
+            var name = parts[0], wanted = parts[1];
+            var $ctrl = $root.find('[name="' + name + '"]');
+            if (!$ctrl.length) return;
+            var match = ($ctrl.val() || '').toString() === wanted;
+            $root.find('[data-show-when-value="' + spec + '"]').each(function(){
+                $(this).toggleClass('is-hidden', !match);
+            });
+        }
+
+        // Init all declared conditionals
+        $root.find('[data-show-when]').each(function(){
+            updateShowWhen($(this).data('show-when'));
+        });
+        $root.find('[data-show-when-filled]').each(function(){
+            updateShowWhenFilled($(this).data('show-when-filled'));
+        });
+        $root.find('[data-show-when-value]').each(function(){
+            updateShowWhenValue($(this).data('show-when-value'));
+        });
+
+        // Re-evaluate on change
+        $root.on('change input', 'input, select, textarea', function(){
+            var name = this.name;
+            if (!name) return;
+            updateShowWhen(name);
+            updateShowWhenFilled(name);
+            // Value-based may match any data-show-when-value starting with "name="
+            $root.find('[data-show-when-value^="' + name + '="]').each(function(){
+                updateShowWhenValue($(this).data('show-when-value'));
+            });
+        });
+    }
+
     // ---- SEO live preview (Google SERP) ----
     function initSeoPreview(root) {
         $(root).find('[data-seo-preview]').each(function(){
@@ -231,6 +291,7 @@
         initRepeaters($root);
         initStarInputs($root);
         initConfirms($root);
+        initConditionals($root);
         initSeoPreview($root);
     });
 

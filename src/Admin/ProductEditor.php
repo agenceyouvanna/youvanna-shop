@@ -174,10 +174,13 @@ final class ProductEditor
             'value' => $product->sale_price !== null ? (string) $product->sale_price : '',
             'suffix' => $sym,
             'hint' => __('Si renseigné, un bandeau "Promo" s\'affiche et le prix est barré. Laisse vide pour désactiver la promo.', 'yv-shop'),
+            'attrs' => ['data-toggle-target' => 'sale_dates'],
         ]);
         echo '<div></div>';
         echo '</div>';
 
+        // Sale dates : visible only when sale_price is filled
+        echo '<div class="yv-conditional" data-show-when-filled="sale_price">';
         echo '<div class="yv-row-2col">';
         self::field('sale_from', __('Début de la promo', 'yv-shop'), [
             'type' => 'datetime-local',
@@ -190,19 +193,22 @@ final class ProductEditor
             'hint' => __('Optionnel. Après cette date, le prix normal revient automatiquement.', 'yv-shop'),
         ]);
         echo '</div>';
+        echo '</div>';
 
         echo '<hr style="margin:20px 0;border:0;border-top:1px solid var(--yv-admin-border)">';
 
-        echo '<div class="yv-row-2col">';
         self::field('tax_status', __('TVA', 'yv-shop'), [
             'type' => 'select',
             'value' => $product->tax_status,
             'options' => [
-                'taxable' => __('Soumis à TVA (20% par défaut)', 'yv-shop'),
+                'taxable' => __('Soumis à TVA', 'yv-shop'),
                 'none' => __('Exonéré de TVA', 'yv-shop'),
             ],
             'hint' => __('La TVA est ajoutée au prix lors du checkout si "Soumis à TVA".', 'yv-shop'),
         ]);
+
+        // Tax class : only visible when tax_status = taxable
+        echo '<div class="yv-conditional" data-show-when-value="tax_status=taxable">';
         self::field('tax_class', __('Taux de TVA', 'yv-shop'), [
             'type' => 'select',
             'value' => $product->tax_class,
@@ -229,12 +235,7 @@ final class ProductEditor
 
         self::switchField('manage_stock', __('Gérer le stock de ce produit', 'yv-shop'), $product->manage_stock, __('Si activé, la quantité est décrémentée à chaque commande payée.', 'yv-shop'));
 
-        echo '<div class="yv-row-2col">';
-        self::field('stock_qty', __('Quantité en stock', 'yv-shop'), [
-            'type' => 'number', 'min' => '0', 'step' => '1',
-            'value' => (string) $product->stock_qty,
-            'hint' => __('Nombre d\'unités disponibles. Ignoré si "Gérer le stock" est décoché.', 'yv-shop'),
-        ]);
+        // Always visible : stock status (choix en stock / rupture / sur commande)
         self::field('stock_status', __('Statut du stock', 'yv-shop'), [
             'type' => 'select',
             'value' => $product->stock_status,
@@ -245,9 +246,16 @@ final class ProductEditor
             ],
             'hint' => __('Affiche un libellé au client. "Sur commande" permet d\'accepter des commandes même sans stock.', 'yv-shop'),
         ]);
-        echo '</div>';
 
-        echo '<div class="yv-row-2col">';
+        // Conditional : only visible when manage_stock is on
+        echo '<div class="yv-conditional" data-show-when="manage_stock">';
+        echo '<hr style="margin:20px 0;border:0;border-top:1px solid var(--yv-admin-border)">';
+        self::field('stock_qty', __('Quantité en stock', 'yv-shop'), [
+            'type' => 'number', 'min' => '0', 'step' => '1',
+            'value' => (string) $product->stock_qty,
+            'hint' => __('Nombre d\'unités disponibles. Décrémenté à chaque commande payée.', 'yv-shop'),
+        ]);
+
         self::field('backorders', __('Précommandes', 'yv-shop'), [
             'type' => 'select',
             'value' => $product->backorders,
@@ -405,7 +413,9 @@ final class ProductEditor
 
         $slug = $product->slug !== '' ? $product->slug : sanitize_title($product->name);
         $product_base = trim((string) get_option('yv_shop_general_product_slug', 'produit'), '/');
-        $url = home_url('/' . $product_base . '/' . $slug . '/');
+        $host = (string) wp_parse_url(home_url('/'), PHP_URL_HOST);
+        $breadcrumb = $host . ' > ' . $product_base . ' > ' . ($slug ?: '...');
+        $favicon = (string) get_site_icon_url(32);
 
         self::field('meta_title', __('Titre SEO', 'yv-shop'), [
             'type' => 'text', 'value' => $meta_title,
@@ -423,12 +433,20 @@ final class ProductEditor
         // Live Google SERP preview
         echo '<div class="yv-seo-preview" data-seo-preview';
         echo ' data-fallback-title="' . esc_attr($fallback_title) . '"';
-        echo ' data-fallback-desc="' . esc_attr($fallback_desc) . '"';
-        echo ' data-url="' . esc_attr($url) . '">';
+        echo ' data-fallback-desc="' . esc_attr($fallback_desc) . '">';
         echo '<div class="yv-seo-preview__label">' . esc_html__('Aperçu dans Google', 'yv-shop') . '</div>';
         echo '<div class="yv-seo-preview__card">';
-        echo '<div class="yv-seo-preview__url">' . esc_html($url) . '</div>';
-        echo '<div class="yv-seo-preview__title" data-seo-title>' . esc_html($meta_title !== '' ? $meta_title : $fallback_title) . '</div>';
+        echo '<div class="yv-seo-preview__head">';
+        if ($favicon) {
+            echo '<span class="yv-seo-preview__favicon"><img src="' . esc_url($favicon) . '" alt="" width="18" height="18"></span>';
+        } else {
+            echo '<span class="yv-seo-preview__favicon yv-seo-preview__favicon--placeholder"></span>';
+        }
+        echo '<div class="yv-seo-preview__site">';
+        echo '<div class="yv-seo-preview__sitename">' . esc_html($site_name) . '</div>';
+        echo '<div class="yv-seo-preview__breadcrumb">' . esc_html($breadcrumb) . '</div>';
+        echo '</div></div>';
+        echo '<h3 class="yv-seo-preview__title" data-seo-title>' . esc_html($meta_title !== '' ? $meta_title : $fallback_title) . '</h3>';
         echo '<div class="yv-seo-preview__desc" data-seo-desc>' . esc_html($meta_desc !== '' ? $meta_desc : $fallback_desc) . '</div>';
         echo '</div></div>';
 
