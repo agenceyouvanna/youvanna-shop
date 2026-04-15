@@ -40,6 +40,7 @@ final class Plugin
         if (is_admin()) {
             $this->container->get(Admin\Menu::class)->register();
             $this->container->get(Admin\Settings::class)->register();
+            $this->container->get(Admin\LensSettingsPage::class)->register();
         }
 
         // CLI

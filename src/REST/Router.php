@@ -20,5 +20,6 @@ final class Router
         (new CouponsController())->register_routes();
         (new ReviewsController())->register_routes();
         (new WishlistController())->register_routes();
+        (new LensController())->register_routes();
     }
 }

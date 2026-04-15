@@ -22,6 +22,10 @@ $on_sale = $product->isOnSale();
 $in_stock = $product->isInStock();
 $categories = function_exists('wp_get_object_terms') ? wp_get_object_terms($product->id, 'yv_category', ['fields' => 'all']) : [];
 $shop_url = home_url('/' . trim((string) get_option('yv_shop_general_shop_slug', 'boutique'), '/') . '/');
+$lens_on = (bool) get_post_meta((int) $product->id, '_yv_lens_configurable', true);
+$fitmix_on = (bool) get_post_meta((int) $product->id, '_yv_fitmix_enabled', true);
+$fitmix_sku = (string) get_post_meta((int) $product->id, '_yv_fitmix_sku', true);
+$fitmix_key = (string) get_option('yv_shop_fitmix_key', '');
 
 get_header();
 ?>
@@ -113,19 +117,38 @@ get_header();
                 <?php if ($in_stock): ?>
                     <form class="yv-shop-single__form" data-yv-shop-add-form>
                         <div class="yv-shop-single__actions">
-                            <div class="yv-shop-qty">
-                                <button type="button" class="yv-shop-qty__btn" data-qty-dec aria-label="<?php esc_attr_e('Diminuer la quantité', 'yv-shop'); ?>">-</button>
-                                <input type="number" id="yv-qty" name="quantity" value="1" min="1" <?php if ($product->manage_stock) echo 'max="' . (int) $product->stock_qty . '"'; ?>>
-                                <button type="button" class="yv-shop-qty__btn" data-qty-inc aria-label="<?php esc_attr_e('Augmenter la quantité', 'yv-shop'); ?>">+</button>
-                            </div>
-                            <button type="submit"
-                                    class="yv-shop-btn yv-shop-btn--primary yv-shop-btn--large yv-shop-add-to-cart"
-                                    data-product-id="<?php echo (int) $product->id; ?>"
-                                    data-product-name="<?php echo esc_attr($product->name); ?>"
-                                    data-product-price="<?php echo esc_attr((string) $product->activePrice()); ?>"
-                                    data-product-image="<?php echo esc_attr($product->imageUrl('thumbnail')); ?>">
-                                <?php esc_html_e('Ajouter au panier', 'yv-shop'); ?>
-                            </button>
+                            <?php if ($lens_on): ?>
+                                <button type="button"
+                                        class="yv-shop-btn yv-shop-btn--primary yv-shop-btn--large"
+                                        data-lens-open
+                                        data-product-id="<?php echo (int) $product->id; ?>"
+                                        data-product-name="<?php echo esc_attr($product->name); ?>"
+                                        data-product-price="<?php echo esc_attr((string) $product->activePrice()); ?>"
+                                        data-product-image="<?php echo esc_attr($product->imageUrl('thumbnail')); ?>">
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="6" cy="14" r="4"/><circle cx="18" cy="14" r="4"/><path d="M10 14h4"/><path d="M2 10l4 4M22 10l-4 4"/></svg>
+                                    <?php esc_html_e('Configurer mes verres', 'yv-shop'); ?>
+                                </button>
+                                <?php if ($fitmix_on && $fitmix_key && $fitmix_sku): ?>
+                                    <button type="button" class="yv-shop-btn yv-shop-btn--secondary yv-shop-btn--large" data-fitmix-open data-fitmix-sku="<?php echo esc_attr($fitmix_sku); ?>">
+                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                                        <?php esc_html_e('Essayer', 'yv-shop'); ?>
+                                    </button>
+                                <?php endif; ?>
+                            <?php else: ?>
+                                <div class="yv-shop-qty">
+                                    <button type="button" class="yv-shop-qty__btn" data-qty-dec aria-label="<?php esc_attr_e('Diminuer la quantité', 'yv-shop'); ?>">-</button>
+                                    <input type="number" id="yv-qty" name="quantity" value="1" min="1" <?php if ($product->manage_stock) echo 'max="' . (int) $product->stock_qty . '"'; ?>>
+                                    <button type="button" class="yv-shop-qty__btn" data-qty-inc aria-label="<?php esc_attr_e('Augmenter la quantité', 'yv-shop'); ?>">+</button>
+                                </div>
+                                <button type="submit"
+                                        class="yv-shop-btn yv-shop-btn--primary yv-shop-btn--large yv-shop-add-to-cart"
+                                        data-product-id="<?php echo (int) $product->id; ?>"
+                                        data-product-name="<?php echo esc_attr($product->name); ?>"
+                                        data-product-price="<?php echo esc_attr((string) $product->activePrice()); ?>"
+                                        data-product-image="<?php echo esc_attr($product->imageUrl('thumbnail')); ?>">
+                                    <?php esc_html_e('Ajouter au panier', 'yv-shop'); ?>
+                                </button>
+                            <?php endif; ?>
                         </div>
                     </form>
                 <?php else: ?>
@@ -150,5 +173,12 @@ get_header();
 
     </div>
 </div>
+
+<?php if ($lens_on) {
+    $lens_modal = YV_SHOP_DIR . '/templates/parts/lens-modal.php';
+    if (file_exists($lens_modal)) {
+        include $lens_modal;
+    }
+} ?>
 
 <?php get_footer();

@@ -81,6 +81,7 @@ final class ProductEditor
             'media'      => ['icon' => 'dashicons-format-gallery', 'label' => __('Images', 'yv-shop')],
             'taxonomy'   => ['icon' => 'dashicons-category', 'label' => __('Catégories', 'yv-shop')],
             'variations' => ['icon' => 'dashicons-grid-view', 'label' => __('Variations', 'yv-shop')],
+            'lens'       => ['icon' => 'dashicons-visibility', 'label' => __('Verres', 'yv-shop')],
             'shipping'   => ['icon' => 'dashicons-cart', 'label' => __('Livraison', 'yv-shop')],
             'seo'        => ['icon' => 'dashicons-search', 'label' => __('SEO', 'yv-shop')],
         ];
@@ -96,8 +97,47 @@ final class ProductEditor
         self::panelMedia($product);
         self::panelTaxonomy($product);
         self::panelVariations($product);
+        self::panelLens($product);
         self::panelShipping($product);
         self::panelSeo($product);
+    }
+
+    private static function panelLens(Product $product): void
+    {
+        echo '<div class="yv-tab-panel" data-panel="lens">';
+        echo '<div class="yv-card"><div class="yv-card__header"><h2>' . esc_html__('Configurateur de verres', 'yv-shop') . '</h2><span class="yv-card__hint">' . esc_html__('Active-le pour les montures optiques : le client choisit ses verres et sa correction avant d\'ajouter au panier.', 'yv-shop') . '</span></div><div class="yv-card__body">';
+
+        $lens_on = $product->id ? (bool) get_post_meta((int) $product->id, '_yv_lens_configurable', true) : false;
+        $vto_on  = $product->id ? (bool) get_post_meta((int) $product->id, '_yv_fitmix_enabled', true) : false;
+        $fitmix_sku = $product->id ? (string) get_post_meta((int) $product->id, '_yv_fitmix_sku', true) : '';
+        $gtin = $product->id ? (string) get_post_meta((int) $product->id, '_yv_gtin', true) : '';
+
+        echo '<div class="yv-infobox">' . esc_html__('Activer le configurateur ajoute un CTA « Configurer mes verres » sur la fiche produit. Le prix de la monture est cumulé avec le supplément des verres choisis (amincissement, photochromiques, anti-reflets, etc.).', 'yv-shop') . '</div>';
+
+        self::switchField('lens_configurable', __('Activer le configurateur de verres', 'yv-shop'), $lens_on, __('Recommandé pour les lunettes optiques et solaires. À désactiver pour les accessoires (étuis, cordons, etc.).', 'yv-shop'));
+
+        echo '<div class="yv-conditional" data-show-when="lens_configurable">';
+        echo '<hr style="margin:20px 0;border:0;border-top:1px solid var(--yv-admin-border)">';
+
+        self::switchField('fitmix_enabled', __('Essayage virtuel (FitMix)', 'yv-shop'), $vto_on, __('Active le bouton « Essayer » qui ouvre la caméra pour superposer la monture sur le visage du client.', 'yv-shop'));
+
+        echo '<div class="yv-conditional" data-show-when="fitmix_enabled">';
+        self::field('fitmix_sku', __('SKU FitMix (3D model ID)', 'yv-shop'), [
+            'type' => 'text', 'value' => $fitmix_sku,
+            'hint' => __('Identifiant FittingBox de la monture. Laisse vide si le modèle 3D n\'existe pas : un fallback affichera une photo statique.', 'yv-shop'),
+            'placeholder' => 'balenciaga-bb0095s',
+        ]);
+        echo '</div>';
+
+        self::field('gtin', __('GTIN / EAN (code-barres)', 'yv-shop'), [
+            'type' => 'text', 'value' => $gtin,
+            'hint' => __('Obligatoire pour Google Shopping et le référencement produits. 13 chiffres pour un EAN, 12 pour un UPC.', 'yv-shop'),
+            'placeholder' => '3660732000000',
+        ]);
+
+        echo '</div>';
+        echo '</div></div>';
+        echo '</div>';
     }
 
     private static function panelGeneral(Product $product): void
@@ -624,6 +664,12 @@ final class ProductEditor
         if ($product->id) {
             update_post_meta($product->id, '_yv_meta_title', sanitize_text_field($post['meta_title'] ?? ''));
             update_post_meta($product->id, '_yv_meta_description', sanitize_textarea_field($post['meta_description'] ?? ''));
+
+            // Lens configurator meta
+            update_post_meta($product->id, '_yv_lens_configurable', !empty($post['lens_configurable']) ? 1 : 0);
+            update_post_meta($product->id, '_yv_fitmix_enabled', !empty($post['fitmix_enabled']) ? 1 : 0);
+            update_post_meta($product->id, '_yv_fitmix_sku', sanitize_text_field($post['fitmix_sku'] ?? ''));
+            update_post_meta($product->id, '_yv_gtin', preg_replace('/[^0-9]/', '', (string) ($post['gtin'] ?? '')));
 
             // Variations
             $vrepo = new VariationRepository();

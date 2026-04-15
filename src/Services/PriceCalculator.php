@@ -62,7 +62,22 @@ final class PriceCalculator
                     continue;
                 }
             }
-            $line_subtotal = round($price * $qty, 2);
+
+            // Lens configuration (optional) - adds extra_price per unit
+            $lens_config = isset($item['lens_config']) && is_array($item['lens_config']) ? $item['lens_config'] : null;
+            $lens_extra = 0.0;
+            $lens_summary = [];
+            if ($lens_config !== null) {
+                $lens_result = \Youvanna\Shop\Services\LensConfigurator::validate($lens_config);
+                if (!empty($lens_result['errors'])) {
+                    $validations[] = ['type' => 'lens_invalid', 'product_id' => $pid, 'errors' => $lens_result['errors']];
+                }
+                $lens_extra = (float) ($lens_result['extra_price'] ?? 0);
+                $lens_summary = \Youvanna\Shop\Services\LensConfigurator::summarize($lens_config);
+            }
+
+            $unit_price = round($price + $lens_extra, 2);
+            $line_subtotal = round($unit_price * $qty, 2);
             $line_tax = $this->tax->computeLineTax($product, $line_subtotal, $country, $tax_mode);
             $resolved_items[] = [
                 'product_id'    => $pid,
@@ -72,7 +87,11 @@ final class PriceCalculator
                 'image'         => $product->imageUrl('medium'),
                 'permalink'     => $product->permalink(),
                 'qty'           => $qty,
-                'price'         => $price,
+                'price'         => $unit_price,
+                'base_price'    => $price,
+                'lens_extra'    => $lens_extra,
+                'lens_config'   => $lens_config,
+                'lens_summary'  => $lens_summary,
                 'line_subtotal' => $line_subtotal,
                 'line_tax'      => $line_tax,
                 'line_total'    => $line_subtotal,

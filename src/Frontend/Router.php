@@ -168,6 +168,24 @@ final class Router
         }
         if ($this->context === 'single') {
             wp_enqueue_script('yv-shop-product', $base . 'product.js', ['yv-shop-store'], $ver, true);
+
+            // Lens configurator assets only when the current product opts in
+            if ($this->current_product_id && (bool) get_post_meta($this->current_product_id, '_yv_lens_configurable', true)) {
+                wp_enqueue_style('yv-shop-lens', $base . 'lens-configurator.css', ['yv-shop-base'], $ver);
+                wp_register_script('yv-shop-lens', $base . 'lens-configurator.js', ['yv-shop-store'], $ver, true);
+                wp_localize_script('yv-shop-lens', 'yvShopLens', [
+                    'i18n_recap'        => __('Récapitulatif', 'yv-shop'),
+                    'i18n_invalid'      => __('Configuration incomplète : ', 'yv-shop'),
+                    'i18n_pd_required'  => __('Renseigne ton écart pupillaire.', 'yv-shop'),
+                    'i18n_manual'       => __('Saisie manuelle', 'yv-shop'),
+                    'i18n_photo'        => __('Photo envoyée', 'yv-shop'),
+                    'i18n_uploading'    => __('Envoi en cours...', 'yv-shop'),
+                    'i18n_upload_error' => __('Échec : ', 'yv-shop'),
+                    'i18n_no_pd_key'    => __('Mesure caméra non disponible.', 'yv-shop'),
+                    'i18n_remove'       => __('Retirer', 'yv-shop'),
+                ]);
+                wp_enqueue_script('yv-shop-lens');
+            }
         }
         if ($this->context === 'cart') {
             wp_enqueue_script('yv-shop-cart', $base . 'cart.js', ['yv-shop-store'], $ver, true);

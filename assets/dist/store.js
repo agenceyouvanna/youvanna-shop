@@ -26,14 +26,22 @@
         w.dispatchEvent(new CustomEvent(EVT_CHANGED, { detail: cart }));
     }
 
-    function findIndex(cart, productId, variationId) {
+    function findIndex(cart, productId, variationId, configSig) {
         variationId = variationId || null;
+        configSig = configSig || null;
         for (var i = 0; i < cart.items.length; i++) {
-            if (cart.items[i].product_id === productId && (cart.items[i].variation_id || null) === variationId) {
+            if (cart.items[i].product_id === productId
+                && (cart.items[i].variation_id || null) === variationId
+                && (cart.items[i].config_sig || null) === configSig) {
                 return i;
             }
         }
         return -1;
+    }
+
+    function configSignature(config) {
+        if (!config || typeof config !== 'object') return null;
+        try { return JSON.stringify(config); } catch (e) { return null; }
     }
 
     var Store = {
@@ -53,7 +61,8 @@
 
         add: function (item) {
             var cart = read();
-            var idx = findIndex(cart, item.product_id, item.variation_id);
+            var sig = configSignature(item.lens_config);
+            var idx = findIndex(cart, item.product_id, item.variation_id, sig);
             if (idx >= 0) {
                 cart.items[idx].qty = (parseInt(cart.items[idx].qty, 10) || 0) + (parseInt(item.qty, 10) || 1);
             } else {
@@ -64,16 +73,18 @@
                     name: item.name || '',
                     price: parseFloat(item.price) || 0,
                     image: item.image || '',
-                    permalink: item.permalink || ''
+                    permalink: item.permalink || '',
+                    lens_config: item.lens_config || null,
+                    config_sig: sig
                 });
             }
             write(cart);
             return cart;
         },
 
-        setQty: function (productId, variationId, qty) {
+        setQty: function (productId, variationId, qty, configSig) {
             var cart = read();
-            var idx = findIndex(cart, productId, variationId);
+            var idx = findIndex(cart, productId, variationId, configSig || null);
             if (idx < 0) return cart;
             qty = parseInt(qty, 10);
             if (!qty || qty < 1) {
@@ -85,9 +96,9 @@
             return cart;
         },
 
-        remove: function (productId, variationId) {
+        remove: function (productId, variationId, configSig) {
             var cart = read();
-            var idx = findIndex(cart, productId, variationId);
+            var idx = findIndex(cart, productId, variationId, configSig || null);
             if (idx >= 0) {
                 cart.items.splice(idx, 1);
                 write(cart);

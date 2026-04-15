@@ -32,6 +32,7 @@ final class Menu
         add_submenu_page('yv-shop', __('Catégories', 'yv-shop'), __('Catégories', 'yv-shop'), 'yv_shop_manage_products', 'edit-tags.php?taxonomy=yv_category');
         add_submenu_page('yv-shop', __('Attributs', 'yv-shop'), __('Attributs', 'yv-shop'), 'yv_shop_manage_products', 'yv-shop-attributes', [AttributesPage::class, 'render']);
         add_submenu_page('yv-shop', __('Import / Export', 'yv-shop'), __('Import / Export', 'yv-shop'), 'yv_shop_manage_products', 'yv-shop-import', [ImportExportPage::class, 'render']);
+        add_submenu_page('yv-shop', __('Verres (FittingBox)', 'yv-shop'), __('Verres (FittingBox)', 'yv-shop'), $cap, 'yv-shop-lens', [LensSettingsPage::class, 'render']);
         add_submenu_page('yv-shop', __('Réglages', 'yv-shop'), __('Réglages', 'yv-shop'), $cap, 'yv-shop-settings', [Settings::class, 'render']);
     }
 

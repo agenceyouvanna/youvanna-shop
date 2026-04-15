@@ -59,6 +59,7 @@ final class CartController extends Controller
                 'variation_id' => $i['variation_id'] ?? null,
                 'qty'          => (int) $i['qty'],
                 'price'        => (float) $i['price'],
+                'lens_config'  => $i['lens_config'] ?? null,
             ], $computed['items']),
             'subtotal' => $computed['totals']['subtotal'],
             'total'    => $computed['totals']['total'],
