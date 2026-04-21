@@ -3,7 +3,7 @@
  * Plugin Name: Youvanna Shop
  * Plugin URI: https://github.com/agenceyouvanna/youvanna-shop
  * Description: E-commerce léger, performant et réutilisable. Alternative ciblée à WooCommerce.
- * Version: 2.1.1
+ * Version: 2.1.2
  * Requires PHP: 8.1
  * Requires at least: 6.4
  * Author: Agence Youvanna
@@ -16,7 +16,7 @@
 
 defined('ABSPATH') || exit;
 
-define('YV_SHOP_VERSION', '2.1.1');
+define('YV_SHOP_VERSION', '2.1.2');
 define('YV_SHOP_FILE', __FILE__);
 define('YV_SHOP_DIR', __DIR__);
 define('YV_SHOP_URL', plugin_dir_url(__FILE__));

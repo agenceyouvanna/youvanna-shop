@@ -88,6 +88,9 @@ get_header();
                 <h1 class="yv-shop-single__title"><?php echo esc_html($product->name); ?></h1>
 
                 <div class="yv-shop-single__price">
+                    <?php if ($lens_on): ?>
+                        <span class="yv-shop-single__price-from"><?php esc_html_e('À partir de', 'yv-shop'); ?></span>
+                    <?php endif; ?>
                     <?php if ($on_sale): ?>
                         <del><?php echo esc_html(Currency::format($product->price)); ?></del>
                         <ins><?php echo esc_html(Currency::format($product->activePrice())); ?></ins>
@@ -158,6 +161,24 @@ get_header();
                 <?php
                 do_action('yv_shop_single_summary_end', $product);
                 ?>
+
+                <div class="yv-shop-single__reassurance" aria-label="<?php esc_attr_e('Nos garanties', 'yv-shop'); ?>">
+                    <div>
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+                        <strong><?php esc_html_e('Livraison offerte', 'yv-shop'); ?></strong>
+                        <span><?php esc_html_e('Dès 50 € en France', 'yv-shop'); ?></span>
+                    </div>
+                    <div>
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 11 14 15 10"/></svg>
+                        <strong><?php esc_html_e('Paiement sécurisé', 'yv-shop'); ?></strong>
+                        <span><?php esc_html_e('CB, Apple Pay, Google Pay', 'yv-shop'); ?></span>
+                    </div>
+                    <div>
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+                        <strong><?php esc_html_e('Retours 14 jours', 'yv-shop'); ?></strong>
+                        <span><?php esc_html_e('Satisfait ou remboursé', 'yv-shop'); ?></span>
+                    </div>
+                </div>
 
             </div>
         </div>

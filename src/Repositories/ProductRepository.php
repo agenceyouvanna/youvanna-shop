@@ -97,14 +97,15 @@ final class ProductRepository
     private function buildWhere(SearchCriteria $c): array
     {
         $clauses = [];
-        $params = [];
+        $where_params = [];
+        $join_params = [];
         $joins = '';
 
         // Statuses
         if (!empty($c->statuses)) {
             $placeholders = implode(',', array_fill(0, count($c->statuses), '%s'));
             $clauses[] = "p.status IN ({$placeholders})";
-            $params = array_merge($params, $c->statuses);
+            $where_params = array_merge($where_params, $c->statuses);
         }
 
         if ($c->in_stock_only) {
@@ -119,17 +120,17 @@ final class ProductRepository
 
         if ($c->min_price !== null) {
             $clauses[] = 'p.price >= %f';
-            $params[] = $c->min_price;
+            $where_params[] = $c->min_price;
         }
         if ($c->max_price !== null) {
             $clauses[] = 'p.price <= %f';
-            $params[] = $c->max_price;
+            $where_params[] = $c->max_price;
         }
 
         if ($c->query !== '') {
             $clauses[] = '(MATCH(p.name, p.description, p.short_description) AGAINST(%s IN NATURAL LANGUAGE MODE) OR p.name LIKE %s)';
-            $params[] = $c->query;
-            $params[] = '%' . $this->wpdb->esc_like($c->query) . '%';
+            $where_params[] = $c->query;
+            $where_params[] = '%' . $this->wpdb->esc_like($c->query) . '%';
         }
 
         // Categories
@@ -138,7 +139,7 @@ final class ProductRepository
             $joins .= " INNER JOIN {$this->terms_table} {$alias} ON {$alias}.product_id = p.id AND {$alias}.taxonomy = 'yv_category'";
             $placeholders = implode(',', array_fill(0, count($c->category_ids), '%d'));
             $clauses[] = "{$alias}.term_id IN ({$placeholders})";
-            $params = array_merge($params, $c->category_ids);
+            $where_params = array_merge($where_params, $c->category_ids);
         }
 
         // Tags
@@ -147,7 +148,7 @@ final class ProductRepository
             $joins .= " INNER JOIN {$this->terms_table} {$alias} ON {$alias}.product_id = p.id AND {$alias}.taxonomy = 'yv_tag'";
             $placeholders = implode(',', array_fill(0, count($c->tag_ids), '%d'));
             $clauses[] = "{$alias}.term_id IN ({$placeholders})";
-            $params = array_merge($params, $c->tag_ids);
+            $where_params = array_merge($where_params, $c->tag_ids);
         }
 
         // Attributes (each attribute = INNER JOIN dedicated)
@@ -159,14 +160,15 @@ final class ProductRepository
             $alias = 'pt_attr_' . $i++;
             $tax = 'yv_attr_' . $attr_key;
             $joins .= " INNER JOIN {$this->terms_table} {$alias} ON {$alias}.product_id = p.id AND {$alias}.taxonomy = %s";
-            $params[] = $tax;
+            $join_params[] = $tax;
             $placeholders = implode(',', array_fill(0, count($term_ids), '%d'));
             $clauses[] = "{$alias}.term_id IN ({$placeholders})";
-            $params = array_merge($params, $term_ids);
+            $where_params = array_merge($where_params, $term_ids);
         }
 
         $where = empty($clauses) ? '1=1' : implode(' AND ', $clauses);
-        return [$where, $params, $joins];
+        // JOIN placeholders come first in the SQL, so join_params must be ordered first.
+        return [$where, array_merge($join_params, $where_params), $joins];
     }
 
     private function buildOrderBy(SearchCriteria $c): string
