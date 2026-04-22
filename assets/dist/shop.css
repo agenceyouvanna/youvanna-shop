@@ -64,29 +64,35 @@
     background-size: cover;
     background-position: center;
     overflow: hidden;
-    margin-bottom: 2.5rem;
+    margin-bottom: 2rem;
 }
-.yv-shop-archive__hero-overlay {
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(180deg, rgba(0,0,0,.18) 0%, rgba(0,0,0,.12) 50%, rgba(0,0,0,.28) 100%);
-}
+.yv-shop-archive__hero-overlay { display: none; }
 .yv-shop-archive__hero-brands {
     position: absolute;
     inset: 0;
     display: flex;
-    flex-wrap: wrap;
-    gap: clamp(1rem, 4vw, 3rem);
+    flex-wrap: nowrap;
+    gap: clamp(.5rem, 1.5vw, 1.25rem);
     align-items: center;
     justify-content: center;
-    padding: 2rem;
+    padding: 1.5rem 2rem;
     color: #fff;
     font-family: var(--yv-shop-font-serif);
-    font-weight: 600;
-    letter-spacing: .18em;
+    font-weight: 500;
+    letter-spacing: .12em;
     text-transform: uppercase;
-    font-size: clamp(1rem, 2vw, 1.75rem);
-    text-shadow: 0 2px 8px rgba(0,0,0,.35);
+    font-size: clamp(.85rem, 1.4vw, 1.1rem);
+    text-shadow: 0 2px 10px rgba(0,0,0,.55), 0 0 1px rgba(0,0,0,.6);
+    white-space: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+}
+.yv-shop-archive__hero-brands::-webkit-scrollbar { display: none; }
+.yv-shop-archive__hero-brand { display: inline-block; }
+.yv-shop-archive__hero-sep {
+    opacity: .75;
+    font-weight: 300;
+    color: #fff;
 }
 .yv-shop-archive__hero-banner--plain {
     display: flex;
@@ -122,30 +128,21 @@
     letter-spacing: -.01em;
 }
 @media (max-width: 640px) {
-    .yv-shop-archive__hero-banner { height: 180px; margin-bottom: 1.5rem; }
-    .yv-shop-archive__hero-brands { gap: .75rem; font-size: .85rem; padding: 1rem; letter-spacing: .12em; }
+    .yv-shop-archive__hero-banner { height: 180px; margin-bottom: 1.25rem; }
+    .yv-shop-archive__hero-brands { gap: .5rem; font-size: .7rem; padding: 1rem .75rem; letter-spacing: .08em; }
 }
 
-/* Hero secondaire (titre centre sous la banniere image) - style maisonmira.shop */
+/* Header categorie (uniquement affiche quand une categorie est selectionnee) */
 .yv-shop-archive__head {
-    text-align: center;
-    padding: .5rem 0 1.75rem;
-    margin-bottom: 1.25rem;
-    border-bottom: 1px solid var(--yv-shop-color-border);
-}
-.yv-shop-archive__eyebrow {
-    font-size: .7rem;
-    text-transform: uppercase;
-    letter-spacing: .22em;
-    color: var(--yv-shop-color-muted);
-    margin-bottom: .6rem;
-    font-weight: 500;
+    text-align: left;
+    padding: 0 0 1.25rem;
+    margin-bottom: 1rem;
 }
 .yv-shop-archive__title,
 .yv-shop-page-title {
     font-family: var(--yv-shop-font-serif);
-    font-size: clamp(1.75rem, 3vw, 2.25rem);
-    margin: 0 0 .5rem;
+    font-size: clamp(1.5rem, 2.6vw, 2rem);
+    margin: 0 0 .4rem;
     font-weight: 600;
     letter-spacing: -.01em;
     line-height: 1.15;
@@ -153,8 +150,8 @@
 }
 .yv-shop-archive__description {
     color: var(--yv-shop-color-muted);
-    max-width: 60ch;
-    margin: .5rem auto 0;
+    max-width: 65ch;
+    margin: .25rem 0 0;
     line-height: 1.55;
     font-size: .95rem;
 }
@@ -578,17 +575,18 @@ html.yv-shop-filters-open .yv-shop-filters-backdrop {
     align-items: center;
     justify-content: space-between;
     gap: 1rem;
-    padding-bottom: 1.25rem;
+    padding-bottom: 1rem;
     margin-bottom: 1.5rem;
     border-bottom: 1px solid var(--yv-shop-color-border);
 }
 .yv-shop-toolbar__count {
     color: var(--yv-shop-color-text);
-    font-size: .88rem;
+    font-size: .9rem;
+    font-weight: 400;
 }
 .yv-shop-toolbar__count strong {
     color: var(--yv-shop-color-text);
-    font-weight: 600;
+    font-weight: 500;
 }
 .yv-shop-toolbar__sort-label {
     font-size: .88rem;
@@ -657,6 +655,13 @@ html.yv-shop-filters-open .yv-shop-filters-backdrop {
 @media (max-width: 960px) {
     .yv-shop-toolbar__filter-btn { display: inline-flex; }
 }
+@media (max-width: 640px) {
+    .yv-shop-toolbar { flex-wrap: wrap; gap: .75rem; }
+    .yv-shop-toolbar__count { width: 100%; font-size: .82rem; }
+    .yv-shop-toolbar__actions { width: 100%; justify-content: space-between; gap: .5rem; }
+    .yv-shop-toolbar__sort-label { display: none; }
+    .yv-shop-toolbar__sort select { min-width: 0; max-width: 180px; }
+}
 
 .yv-shop-active-filters {
     display: flex;
@@ -709,7 +714,7 @@ html.yv-shop-filters-open .yv-shop-filters-backdrop {
 .yv-shop-grid {
     display: grid;
     grid-template-columns: repeat(var(--yv-shop-cols-desktop), 1fr);
-    gap: var(--yv-shop-card-gap);
+    gap: 2.5rem 2rem;
 }
 @media (max-width: 1200px) {
     .yv-shop-grid { grid-template-columns: repeat(var(--yv-shop-cols-tablet), 1fr); }
@@ -733,7 +738,7 @@ html.yv-shop-filters-open .yv-shop-filters-backdrop {
 .yv-shop-card__media {
     position: relative;
     aspect-ratio: var(--yv-shop-card-aspect);
-    background: var(--yv-shop-card-bg);
+    background: #fff;
     overflow: hidden;
     border-radius: var(--yv-shop-radius);
     display: flex;
@@ -750,20 +755,13 @@ html.yv-shop-filters-open .yv-shop-filters-backdrop {
 .yv-shop-card__media-link:hover .yv-shop-card__media img { transform: scale(1.04); }
 .yv-shop-card__media-placeholder { width: 100%; height: 100%; background: var(--yv-shop-color-bg-soft); }
 .yv-shop-card__body {
-    padding: 1rem 0 0;
+    padding: .85rem 0 0;
     display: flex;
     flex-direction: column;
-    gap: .35rem;
-}
-.yv-shop-card__eyebrow {
-    font-size: .7rem;
-    text-transform: uppercase;
-    letter-spacing: .14em;
-    color: var(--yv-shop-color-muted);
-    font-weight: 500;
+    gap: .3rem;
 }
 .yv-shop-card__title {
-    font-size: 1.05rem;
+    font-size: 1rem;
     font-weight: 500;
     margin: 0;
     line-height: 1.3;
@@ -782,9 +780,9 @@ html.yv-shop-filters-open .yv-shop-filters-backdrop {
 .yv-shop-card__title a:hover { color: var(--yv-shop-color-primary); }
 .yv-shop-card__price {
     color: var(--yv-shop-color-text);
-    font-size: .95rem;
-    font-weight: 600;
-    margin-top: .2rem;
+    font-size: .92rem;
+    font-weight: 500;
+    margin-top: .1rem;
     display: flex;
     align-items: baseline;
     flex-wrap: wrap;
@@ -811,14 +809,14 @@ html.yv-shop-filters-open .yv-shop-filters-backdrop {
     display: flex;
     flex-direction: column;
     align-items: flex-start;
-    gap: .6rem;
+    gap: .55rem;
     margin-top: .75rem;
 }
 .yv-shop-card__cta {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    padding: .55rem 1.1rem;
+    padding: .55rem 1.2rem;
     border: 1px solid var(--yv-shop-color-primary);
     background: transparent;
     color: var(--yv-shop-color-primary);

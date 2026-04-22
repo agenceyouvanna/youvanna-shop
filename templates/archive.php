@@ -160,11 +160,11 @@ get_header();
 
     <?php if ($hero_image_url): ?>
         <section class="yv-shop-archive__hero-banner" style="background-image: url('<?php echo esc_url($hero_image_url); ?>');">
-            <div class="yv-shop-archive__hero-overlay"></div>
             <?php if (!empty($hero_brands)): ?>
                 <div class="yv-shop-archive__hero-brands" aria-hidden="true">
-                    <?php foreach ($hero_brands as $brand): ?>
-                        <span><?php echo esc_html($brand); ?></span>
+                    <?php foreach ($hero_brands as $i => $brand): ?>
+                        <?php if ($i > 0): ?><span class="yv-shop-archive__hero-sep" aria-hidden="true">|</span><?php endif; ?>
+                        <span class="yv-shop-archive__hero-brand"><?php echo esc_html($brand); ?></span>
                     <?php endforeach; ?>
                 </div>
             <?php endif; ?>
@@ -180,29 +180,13 @@ get_header();
 
     <div class="yv-shop-container">
 
-        <?php if ($hero_image_url): ?>
+        <?php if ($current_category_id): ?>
             <header class="yv-shop-archive__head">
-                <p class="yv-shop-archive__eyebrow"><?php echo esc_html($hero_eyebrow); ?></p>
                 <h1 class="yv-shop-archive__title"><?php echo esc_html($shop_title); ?></h1>
-                <?php if ($current_category_id && ($desc = term_description($current_category_id, 'yv_category'))): ?>
+                <?php if ($desc = term_description($current_category_id, 'yv_category')): ?>
                     <div class="yv-shop-archive__description"><?php echo wp_kses_post($desc); ?></div>
                 <?php endif; ?>
             </header>
-        <?php endif; ?>
-
-        <?php if (!empty($all_categories) && count($all_categories) > 1): ?>
-            <nav class="yv-shop-cat-pills" aria-label="<?php esc_attr_e('Catégories', 'yv-shop'); ?>">
-                <a href="<?php echo esc_url($shop_url); ?>"
-                   class="yv-shop-cat-pill <?php echo $current_category_id ? '' : 'is-active'; ?>">
-                    <?php esc_html_e('Tout voir', 'yv-shop'); ?>
-                </a>
-                <?php foreach ($all_categories as $cat): ?>
-                    <a href="<?php echo esc_url(trailingslashit($shop_url) . 'categorie/' . $cat->slug . '/'); ?>"
-                       class="yv-shop-cat-pill <?php echo ((int) $cat->term_id === $current_category_id) ? 'is-active' : ''; ?>">
-                        <?php echo esc_html($cat->name); ?>
-                    </a>
-                <?php endforeach; ?>
-            </nav>
         <?php endif; ?>
 
         <div class="yv-shop-archive__layout">

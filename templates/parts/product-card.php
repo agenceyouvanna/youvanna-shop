@@ -14,18 +14,8 @@ if (!$product) {
 
 use Youvanna\Shop\Helpers\Currency;
 
-// Brand detection: first word of product name is usually the brand for optical
+// Nom complet affiche sur la card (marque + ref en une ligne, comme maisonmira.shop)
 $raw_name = (string) $product->name;
-$name_parts = preg_split('/\s+/', $raw_name, 2);
-$brand = (string) ($name_parts[0] ?? '');
-$rest_name = (string) ($name_parts[1] ?? '');
-
-// Si categorie explicite differente de la marque detectee, on la prefere
-$categories = wp_get_object_terms((int) $product->id, 'yv_category', ['fields' => 'names']);
-if (!is_wp_error($categories) && !empty($categories)) {
-    $brand = (string) $categories[0];
-    $rest_name = $raw_name;
-}
 
 $has_lens_config = (bool) get_post_meta((int) $product->id, '_yv_lens_configurable', true);
 
@@ -34,7 +24,7 @@ $in_stock = $product->isInStock();
 if (!$in_stock) {
     $cta_label = __('Voir le produit', 'yv-shop');
 } elseif ($has_lens_config) {
-    $cta_label = __('Choix des options', 'yv-shop');
+    $cta_label = __('Ajouter des options', 'yv-shop');
 } else {
     $cta_label = __('Ajouter au panier', 'yv-shop');
 }
@@ -58,18 +48,12 @@ if (!$in_stock) {
         </div>
     </a>
     <div class="yv-shop-card__body">
-        <?php if ($brand): ?>
-            <div class="yv-shop-card__eyebrow"><?php echo esc_html($brand); ?></div>
-        <?php endif; ?>
         <h3 class="yv-shop-card__title">
             <a href="<?php echo esc_url($product->permalink()); ?>">
-                <?php echo esc_html($rest_name !== '' ? $rest_name : $raw_name); ?>
+                <?php echo esc_html($raw_name); ?>
             </a>
         </h3>
         <div class="yv-shop-card__price">
-            <?php if ($has_lens_config): ?>
-                <span class="yv-shop-card__from"><?php esc_html_e('À partir de', 'yv-shop'); ?></span>
-            <?php endif; ?>
             <?php if ($product->isOnSale()): ?>
                 <del><?php echo esc_html(Currency::format($product->price)); ?></del>
                 <ins><?php echo esc_html(Currency::format($product->activePrice())); ?></ins>
