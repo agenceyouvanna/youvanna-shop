@@ -69,6 +69,12 @@ $shop_url = home_url('/' . trim((string) get_option('yv_shop_general_shop_slug',
 $all_categories = get_terms(['taxonomy' => 'yv_category', 'hide_empty' => false]);
 if (is_wp_error($all_categories)) $all_categories = [];
 
+// Calcul de la pagination affichage "X-Y sur Z resultats"
+$per_page = (int) $criteria->per_page;
+$total = (int) $result['total'];
+$range_from = $total > 0 ? (($criteria->page - 1) * $per_page) + 1 : 0;
+$range_to = min($criteria->page * $per_page, $total);
+
 $active_chips = [];
 if ($criteria->query) {
     $active_chips[] = [
@@ -140,23 +146,49 @@ $build_remove_url = static function (array $remove) use ($shop_url): string {
     return $qs ? add_query_arg($qs, $base) : $base;
 };
 
+// Hero configurable via options yv_shop_hero_image_id / yv_shop_hero_eyebrow / yv_shop_hero_brands
+$hero_image_id = (int) get_option('yv_shop_hero_image_id', 0);
+$hero_image_url = $hero_image_id ? wp_get_attachment_image_url($hero_image_id, 'full') : '';
+$hero_eyebrow = (string) get_option('yv_shop_hero_eyebrow', __('Notre collection', 'yv-shop'));
+$hero_brands_raw = (string) get_option('yv_shop_hero_brands', '');
+$hero_brands = array_values(array_filter(array_map('trim', explode(',', $hero_brands_raw))));
+
 get_header();
 ?>
 
 <div class="yv-shop-archive">
+
+    <?php if ($hero_image_url): ?>
+        <section class="yv-shop-archive__hero-banner" style="background-image: url('<?php echo esc_url($hero_image_url); ?>');">
+            <div class="yv-shop-archive__hero-overlay"></div>
+            <?php if (!empty($hero_brands)): ?>
+                <div class="yv-shop-archive__hero-brands" aria-hidden="true">
+                    <?php foreach ($hero_brands as $brand): ?>
+                        <span><?php echo esc_html($brand); ?></span>
+                    <?php endforeach; ?>
+                </div>
+            <?php endif; ?>
+        </section>
+    <?php else: ?>
+        <section class="yv-shop-archive__hero-banner yv-shop-archive__hero-banner--plain">
+            <div class="yv-shop-archive__hero-inner">
+                <p class="yv-shop-archive__hero-eyebrow"><?php echo esc_html($hero_eyebrow); ?></p>
+                <h1 class="yv-shop-archive__hero-title"><?php echo esc_html($shop_title); ?></h1>
+            </div>
+        </section>
+    <?php endif; ?>
+
     <div class="yv-shop-container">
 
-        <header class="yv-shop-archive__hero">
-            <?php if ($current_category_id): ?>
-                <p class="yv-shop-archive__eyebrow"><?php esc_html_e('Catégorie', 'yv-shop'); ?></p>
-            <?php else: ?>
-                <p class="yv-shop-archive__eyebrow"><?php esc_html_e('Notre collection', 'yv-shop'); ?></p>
-            <?php endif; ?>
-            <h1 class="yv-shop-archive__title"><?php echo esc_html($shop_title); ?></h1>
-            <?php if ($current_category_id && ($desc = term_description($current_category_id, 'yv_category'))): ?>
-                <div class="yv-shop-archive__description"><?php echo wp_kses_post($desc); ?></div>
-            <?php endif; ?>
-        </header>
+        <?php if ($hero_image_url): ?>
+            <header class="yv-shop-archive__head">
+                <p class="yv-shop-archive__eyebrow"><?php echo esc_html($hero_eyebrow); ?></p>
+                <h1 class="yv-shop-archive__title"><?php echo esc_html($shop_title); ?></h1>
+                <?php if ($current_category_id && ($desc = term_description($current_category_id, 'yv_category'))): ?>
+                    <div class="yv-shop-archive__description"><?php echo wp_kses_post($desc); ?></div>
+                <?php endif; ?>
+            </header>
+        <?php endif; ?>
 
         <?php if (!empty($all_categories) && count($all_categories) > 1): ?>
             <nav class="yv-shop-cat-pills" aria-label="<?php esc_attr_e('Catégories', 'yv-shop'); ?>">
@@ -183,8 +215,17 @@ get_header();
 
                 <div class="yv-shop-toolbar">
                     <div class="yv-shop-toolbar__count">
-                        <strong><?php echo (int) $result['total']; ?></strong>
-                        <?php echo esc_html(_n('produit', 'produits', (int) $result['total'], 'yv-shop')); ?>
+                        <?php if ($total > 0): ?>
+                            <?php printf(
+                                /* translators: 1: range from, 2: range to, 3: total */
+                                esc_html__('Affichage de %1$s-%2$s sur %3$s résultats', 'yv-shop'),
+                                '<strong>' . (int) $range_from . '</strong>',
+                                '<strong>' . (int) $range_to . '</strong>',
+                                '<strong>' . (int) $total . '</strong>'
+                            ); ?>
+                        <?php else: ?>
+                            <?php esc_html_e('Aucun produit', 'yv-shop'); ?>
+                        <?php endif; ?>
                     </div>
                     <div class="yv-shop-toolbar__actions">
                         <button type="button" class="yv-shop-toolbar__filter-btn" data-yv-filters-open aria-expanded="false">
@@ -203,7 +244,7 @@ get_header();
                                     echo '<input type="hidden" name="' . esc_attr($gk) . '" value="' . esc_attr((string) $gv) . '">';
                                 }
                             } ?>
-                            <label for="yv-shop-sort" class="screen-reader-text"><?php esc_html_e('Trier par', 'yv-shop'); ?></label>
+                            <label for="yv-shop-sort" class="yv-shop-toolbar__sort-label"><?php esc_html_e('Trier par', 'yv-shop'); ?></label>
                             <select id="yv-shop-sort" name="orderby" onchange="this.form.submit()">
                                 <option value="menu_order" <?php selected($criteria->orderby, 'menu_order'); ?>><?php esc_html_e('Tri par défaut', 'yv-shop'); ?></option>
                                 <option value="price|asc" <?php selected($criteria->orderby . '|' . $criteria->order, 'price|asc'); ?>><?php esc_html_e('Prix croissant', 'yv-shop'); ?></option>

@@ -27,11 +27,23 @@ $fitmix_on = (bool) get_post_meta((int) $product->id, '_yv_fitmix_enabled', true
 $fitmix_sku = (string) get_post_meta((int) $product->id, '_yv_fitmix_sku', true);
 $fitmix_key = (string) get_option('yv_shop_fitmix_key', '');
 
+// Brand detection pour eyebrow
+$raw_name = (string) $product->name;
+$name_parts = preg_split('/\s+/', $raw_name, 2);
+$brand_eyebrow = (!empty($categories) && !is_wp_error($categories)) ? (string) $categories[0]->name : (string) ($name_parts[0] ?? '');
+
 get_header();
 ?>
 
 <div class="yv-shop-single">
     <div class="yv-shop-container">
+
+        <div class="yv-shop-single__back-row">
+            <a href="<?php echo esc_url($shop_url); ?>" class="yv-shop-single__back">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+                <?php esc_html_e('Retour', 'yv-shop'); ?>
+            </a>
+        </div>
 
         <nav class="yv-shop-breadcrumb" aria-label="<?php esc_attr_e('Fil d\'Ariane', 'yv-shop'); ?>">
             <a href="<?php echo esc_url(home_url('/')); ?>"><?php esc_html_e('Accueil', 'yv-shop'); ?></a>
@@ -52,25 +64,29 @@ get_header();
                     <div class="yv-shop-single__thumbs" role="tablist">
                         <?php if ($main): ?>
                             <button type="button" class="yv-shop-single__thumb is-active" data-src="<?php echo esc_url($main); ?>" aria-label="<?php esc_attr_e('Image principale', 'yv-shop'); ?>">
-                                <img src="<?php echo esc_url($product->imageUrl('thumbnail')); ?>" alt="" loading="lazy">
+                                <img src="<?php echo esc_url($product->imageUrl('yv_shop_thumb') ?: $product->imageUrl('medium')); ?>" alt="" loading="lazy">
                             </button>
                         <?php endif; ?>
                         <?php foreach ($product->gallery_ids as $gid):
-                            $src = wp_get_attachment_image_src((int) $gid, 'thumbnail');
+                            $thumb_src = wp_get_attachment_image_src((int) $gid, 'yv_shop_thumb');
+                            if (!$thumb_src) $thumb_src = wp_get_attachment_image_src((int) $gid, 'medium');
                             $full = wp_get_attachment_image_src((int) $gid, 'large');
-                            if (!$src || !$full) continue;
+                            if (!$thumb_src || !$full) continue;
                         ?>
                             <button type="button" class="yv-shop-single__thumb" data-src="<?php echo esc_url($full[0]); ?>">
-                                <img src="<?php echo esc_url($src[0]); ?>" alt="" loading="lazy">
+                                <img src="<?php echo esc_url($thumb_src[0]); ?>" alt="" loading="lazy">
                             </button>
                         <?php endforeach; ?>
                     </div>
                 <?php endif; ?>
 
-                <div class="yv-shop-single__main-image">
+                <div class="yv-shop-single__main-image" data-yv-zoom>
                     <?php if ($on_sale): ?>
                         <span class="yv-shop-single__badge yv-shop-single__badge--sale"><?php esc_html_e('Promo', 'yv-shop'); ?></span>
                     <?php endif; ?>
+                    <button type="button" class="yv-shop-single__zoom-btn" data-yv-zoom-btn aria-label="<?php esc_attr_e('Zoomer', 'yv-shop'); ?>">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg>
+                    </button>
                     <?php if ($main): ?>
                         <img id="yv-shop-main-image" src="<?php echo esc_url($main); ?>" alt="<?php echo esc_attr($product->name); ?>">
                     <?php else: ?>
@@ -81,12 +97,6 @@ get_header();
 
             <div class="yv-shop-single__summary">
 
-                <?php if (!empty($categories) && !is_wp_error($categories)): ?>
-                    <div class="yv-shop-single__eyebrow"><?php echo esc_html($categories[0]->name); ?></div>
-                <?php endif; ?>
-
-                <h1 class="yv-shop-single__title"><?php echo esc_html($product->name); ?></h1>
-
                 <div class="yv-shop-single__price">
                     <?php if ($lens_on): ?>
                         <span class="yv-shop-single__price-from"><?php esc_html_e('À partir de', 'yv-shop'); ?></span>
@@ -95,7 +105,29 @@ get_header();
                         <del><?php echo esc_html(Currency::format($product->price)); ?></del>
                         <ins><?php echo esc_html(Currency::format($product->activePrice())); ?></ins>
                     <?php else: ?>
-                        <span><?php echo esc_html(Currency::format($product->activePrice())); ?></span>
+                        <span class="yv-shop-single__price-amount"><?php echo esc_html(Currency::format($product->activePrice())); ?></span>
+                    <?php endif; ?>
+                    <span class="yv-shop-single__price-tax"><?php esc_html_e('TTC', 'yv-shop'); ?></span>
+                </div>
+
+                <h1 class="yv-shop-single__title"><?php echo esc_html($product->name); ?></h1>
+
+                <div class="yv-shop-single__meta">
+                    <?php if (!empty($categories) && !is_wp_error($categories)): ?>
+                        <div class="yv-shop-single__meta-row">
+                            <span class="yv-shop-single__meta-key"><?php esc_html_e('Catégorie', 'yv-shop'); ?></span>
+                            <?php $cat_links = [];
+                            foreach ($categories as $cat) {
+                                $cat_links[] = '<a href="' . esc_url(add_query_arg('yv_category', $cat->slug, $shop_url)) . '">' . esc_html($cat->name) . '</a>';
+                            }
+                            echo wp_kses_post(implode(', ', $cat_links)); ?>
+                        </div>
+                    <?php endif; ?>
+                    <?php if ($brand_eyebrow && $brand_eyebrow !== (!empty($categories) && !is_wp_error($categories) ? (string) $categories[0]->name : '')): ?>
+                        <div class="yv-shop-single__meta-row">
+                            <span class="yv-shop-single__meta-key"><?php esc_html_e('Marque :', 'yv-shop'); ?></span>
+                            <span class="yv-shop-single__meta-value yv-shop-single__meta-value--accent"><?php echo esc_html($brand_eyebrow); ?></span>
+                        </div>
                     <?php endif; ?>
                 </div>
 
@@ -119,25 +151,41 @@ get_header();
 
                 <?php if ($in_stock): ?>
                     <form class="yv-shop-single__form" data-yv-shop-add-form>
-                        <div class="yv-shop-single__actions">
-                            <?php if ($lens_on): ?>
+                        <?php if ($lens_on): ?>
+                            <div class="yv-shop-single__actions">
+                                <button type="button" class="yv-shop-btn yv-shop-btn--ghost yv-shop-btn--wish" data-yv-wish data-product-id="<?php echo (int) $product->id; ?>">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+                                    <?php esc_html_e('Ajouter aux coups de coeur', 'yv-shop'); ?>
+                                </button>
+                            </div>
+                            <div class="yv-shop-single__actions">
                                 <button type="button"
-                                        class="yv-shop-btn yv-shop-btn--primary yv-shop-btn--large"
+                                        class="yv-shop-btn yv-shop-btn--primary yv-shop-btn--large yv-shop-btn--block"
                                         data-lens-open
                                         data-product-id="<?php echo (int) $product->id; ?>"
                                         data-product-name="<?php echo esc_attr($product->name); ?>"
                                         data-product-price="<?php echo esc_attr((string) $product->activePrice()); ?>"
-                                        data-product-image="<?php echo esc_attr($product->imageUrl('thumbnail')); ?>">
+                                        data-product-image="<?php echo esc_attr($product->imageUrl('yv_shop_thumb') ?: $product->imageUrl('medium')); ?>">
                                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="6" cy="14" r="4"/><circle cx="18" cy="14" r="4"/><path d="M10 14h4"/><path d="M2 10l4 4M22 10l-4 4"/></svg>
                                     <?php esc_html_e('Configurer mes verres', 'yv-shop'); ?>
                                 </button>
-                                <?php if ($fitmix_on && $fitmix_key && $fitmix_sku): ?>
-                                    <button type="button" class="yv-shop-btn yv-shop-btn--secondary yv-shop-btn--large" data-fitmix-open data-fitmix-sku="<?php echo esc_attr($fitmix_sku); ?>">
+                            </div>
+                            <?php if ($fitmix_on && $fitmix_key && $fitmix_sku): ?>
+                                <div class="yv-shop-single__actions">
+                                    <button type="button" class="yv-shop-btn yv-shop-btn--secondary yv-shop-btn--large yv-shop-btn--block" data-fitmix-open data-fitmix-sku="<?php echo esc_attr($fitmix_sku); ?>">
                                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
-                                        <?php esc_html_e('Essayer', 'yv-shop'); ?>
+                                        <?php esc_html_e('Essayer virtuellement', 'yv-shop'); ?>
                                     </button>
-                                <?php endif; ?>
-                            <?php else: ?>
+                                </div>
+                            <?php endif; ?>
+                        <?php else: ?>
+                            <div class="yv-shop-single__actions">
+                                <button type="button" class="yv-shop-btn yv-shop-btn--ghost yv-shop-btn--wish" data-yv-wish data-product-id="<?php echo (int) $product->id; ?>">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+                                    <?php esc_html_e('Ajouter aux coups de coeur', 'yv-shop'); ?>
+                                </button>
+                            </div>
+                            <div class="yv-shop-single__actions yv-shop-single__actions--cart">
                                 <div class="yv-shop-qty">
                                     <button type="button" class="yv-shop-qty__btn" data-qty-dec aria-label="<?php esc_attr_e('Diminuer la quantité', 'yv-shop'); ?>">-</button>
                                     <input type="number" id="yv-qty" name="quantity" value="1" min="1" <?php if ($product->manage_stock) echo 'max="' . (int) $product->stock_qty . '"'; ?>>
@@ -148,11 +196,12 @@ get_header();
                                         data-product-id="<?php echo (int) $product->id; ?>"
                                         data-product-name="<?php echo esc_attr($product->name); ?>"
                                         data-product-price="<?php echo esc_attr((string) $product->activePrice()); ?>"
-                                        data-product-image="<?php echo esc_attr($product->imageUrl('thumbnail')); ?>">
+                                        data-product-image="<?php echo esc_attr($product->imageUrl('yv_shop_thumb') ?: $product->imageUrl('medium')); ?>">
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
                                     <?php esc_html_e('Ajouter au panier', 'yv-shop'); ?>
                                 </button>
-                            <?php endif; ?>
-                        </div>
+                            </div>
+                        <?php endif; ?>
                     </form>
                 <?php else: ?>
                     <p class="yv-shop-single__unavailable"><?php esc_html_e('Ce produit n\'est plus disponible pour le moment.', 'yv-shop'); ?></p>

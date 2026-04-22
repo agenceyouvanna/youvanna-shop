@@ -103,4 +103,38 @@
             }
         });
     }
+
+    // Wishlist toggle (localStorage - pas encore de backend)
+    var WISH_KEY = 'yvShopWishlist';
+    function getWish() {
+        try { return JSON.parse(localStorage.getItem(WISH_KEY) || '[]'); }
+        catch (e) { return []; }
+    }
+    function saveWish(arr) {
+        try { localStorage.setItem(WISH_KEY, JSON.stringify(arr)); } catch (e) {}
+    }
+    function refreshWishButtons() {
+        var list = getWish();
+        d.querySelectorAll('[data-yv-wish]').forEach(function (btn) {
+            var id = btn.dataset.productId;
+            if (!id) return;
+            if (list.indexOf(id) !== -1) btn.classList.add('is-active');
+            else btn.classList.remove('is-active');
+        });
+    }
+    d.addEventListener('click', function (e) {
+        var btn = e.target.closest('[data-yv-wish]');
+        if (!btn) return;
+        e.preventDefault();
+        e.stopPropagation();
+        var id = btn.dataset.productId;
+        if (!id) return;
+        var list = getWish();
+        var idx = list.indexOf(id);
+        if (idx === -1) list.push(id);
+        else list.splice(idx, 1);
+        saveWish(list);
+        refreshWishButtons();
+    });
+    refreshWishButtons();
 })(window, document);

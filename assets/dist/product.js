@@ -1,9 +1,15 @@
 /*!
  * yv-shop single product page.
+ * - Gallery thumbnails switcher.
+ * - Qty +/- buttons.
+ * - Add-to-cart form.
+ * - Image lightbox on main image click.
+ * - Wishlist toggle (localStorage).
  */
 (function (w, d) {
     'use strict';
 
+    // Gallery thumbnails
     d.querySelectorAll('.yv-shop-single__thumb').forEach(function (t) {
         t.addEventListener('click', function () {
             var src = t.dataset.src;
@@ -30,13 +36,15 @@
         input.dispatchEvent(new Event('change', { bubbles: true }));
     });
 
+    // Add to cart submit
     d.addEventListener('submit', function (e) {
         var form = e.target.closest('form[data-yv-shop-add-form]');
         if (!form) return;
         e.preventDefault();
         var btn = form.querySelector('.yv-shop-add-to-cart');
         if (!btn || !w.yvShopStore) return;
-        var qty = parseInt(form.querySelector('[name="quantity"]').value, 10) || 1;
+        var qtyInput = form.querySelector('[name="quantity"]');
+        var qty = qtyInput ? (parseInt(qtyInput.value, 10) || 1) : 1;
         w.yvShopStore.add({
             product_id: btn.dataset.productId,
             qty: qty,
@@ -46,11 +54,77 @@
             permalink: location.pathname
         });
         var original = btn.textContent;
-        btn.textContent = (w.yvShop && w.yvShop.i18n && w.yvShop.i18n.added) || 'Ajouté';
+        btn.textContent = (w.yvShop && w.yvShop.i18n && w.yvShop.i18n.added) || 'Ajoute';
         btn.classList.add('is-added');
         setTimeout(function () {
             btn.textContent = original;
             btn.classList.remove('is-added');
         }, 1500);
     });
+
+    // Image lightbox
+    var mainImg = d.getElementById('yv-shop-main-image');
+    var zoomBtn = d.querySelector('[data-yv-zoom-btn]');
+
+    function openLightbox(src) {
+        var overlay = d.createElement('div');
+        overlay.className = 'yv-shop-lightbox';
+        overlay.innerHTML = '<button type="button" class="yv-shop-lightbox__close" aria-label="Fermer">' +
+            '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>' +
+            '</button>' +
+            '<div class="yv-shop-lightbox__inner"><img src="' + src + '" alt=""></div>';
+        d.body.appendChild(overlay);
+        d.documentElement.classList.add('yv-shop-lightbox-open');
+
+        function close() {
+            overlay.remove();
+            d.documentElement.classList.remove('yv-shop-lightbox-open');
+            d.removeEventListener('keydown', onKey);
+        }
+        function onKey(e) { if (e.key === 'Escape') close(); }
+        overlay.addEventListener('click', function (e) {
+            if (e.target === overlay || e.target.closest('.yv-shop-lightbox__close')) close();
+        });
+        d.addEventListener('keydown', onKey);
+    }
+
+    if (mainImg) {
+        mainImg.addEventListener('click', function () { openLightbox(mainImg.src); });
+    }
+    if (zoomBtn && mainImg) {
+        zoomBtn.addEventListener('click', function (e) { e.stopPropagation(); openLightbox(mainImg.src); });
+    }
+
+    // Wishlist (localStorage only for now - no backend)
+    var WISH_KEY = 'yvShopWishlist';
+    function getWish() {
+        try { return JSON.parse(localStorage.getItem(WISH_KEY) || '[]'); }
+        catch (e) { return []; }
+    }
+    function saveWish(arr) {
+        try { localStorage.setItem(WISH_KEY, JSON.stringify(arr)); } catch (e) {}
+    }
+    function refreshWishButtons() {
+        var list = getWish();
+        d.querySelectorAll('[data-yv-wish]').forEach(function (btn) {
+            var id = btn.dataset.productId;
+            if (!id) return;
+            if (list.indexOf(id) !== -1) btn.classList.add('is-active');
+            else btn.classList.remove('is-active');
+        });
+    }
+    d.addEventListener('click', function (e) {
+        var btn = e.target.closest('[data-yv-wish]');
+        if (!btn) return;
+        e.preventDefault();
+        var id = btn.dataset.productId;
+        if (!id) return;
+        var list = getWish();
+        var idx = list.indexOf(id);
+        if (idx === -1) list.push(id);
+        else list.splice(idx, 1);
+        saveWish(list);
+        refreshWishButtons();
+    });
+    refreshWishButtons();
 })(window, document);
