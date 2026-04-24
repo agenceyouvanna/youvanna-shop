@@ -1,6 +1,13 @@
 /*!
  * yv-shop archive page interactions.
- * Handles: legacy add-to-cart on archives, filter collapsible groups, filter drawer on mobile.
+ * - Legacy add-to-cart on archives
+ * - Filter collapsible groups
+ * - Filter drawer on mobile
+ * - Filter auto-apply (debounced change) + hide Apply button when JS is active
+ *
+ * Note : la logique wishlist (toggle + badge + page) vit dans wishlist.js,
+ * enqueue globalement pour que le badge navbar et les toggles card/single
+ * fonctionnent partout, pas juste sur l'archive.
  */
 (function (w, d) {
     'use strict';
@@ -104,37 +111,68 @@
         });
     }
 
-    // Wishlist toggle (localStorage - pas encore de backend)
-    var WISH_KEY = 'yvShopWishlist';
-    function getWish() {
-        try { return JSON.parse(localStorage.getItem(WISH_KEY) || '[]'); }
-        catch (e) { return []; }
-    }
-    function saveWish(arr) {
-        try { localStorage.setItem(WISH_KEY, JSON.stringify(arr)); } catch (e) {}
-    }
-    function refreshWishButtons() {
-        var list = getWish();
-        d.querySelectorAll('[data-yv-wish]').forEach(function (btn) {
-            var id = btn.dataset.productId;
-            if (!id) return;
-            if (list.indexOf(id) !== -1) btn.classList.add('is-active');
-            else btn.classList.remove('is-active');
+    // -----------------------------------------------------------------
+    // Filter auto-apply
+    // -----------------------------------------------------------------
+    (function setupAutoApply() {
+        var form = d.querySelector('form.yv-shop-filters');
+        if (!form) return;
+
+        // Masque le bouton Appliquer quand JS actif (fallback no-JS conservé)
+        var actions = form.querySelector('.yv-shop-filters__actions');
+        if (actions) actions.classList.add('is-js-hidden');
+
+        var debounceTimer = null;
+        var pending = null;
+
+        function submitForm() {
+            // Retire le param paged pour repartir page 1
+            var pagedInput = form.querySelector('input[name="paged"]');
+            if (pagedInput) pagedInput.parentNode.removeChild(pagedInput);
+            // Marque l'état de loading sur la grille (feedback visuel)
+            var grid = d.querySelector('.yv-shop-archive__grid, .yv-shop-grid');
+            if (grid) grid.classList.add('is-loading');
+            form.submit();
+        }
+
+        function schedule(delay) {
+            if (debounceTimer) clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(function () {
+                debounceTimer = null;
+                submitForm();
+            }, delay);
+        }
+
+        form.addEventListener('change', function (e) {
+            var target = e.target;
+            if (!target || !target.name) return;
+
+            // Ignore les clics sur les toggles UI internes (aucun input[name] donc déjà filtré)
+            var type = (target.type || '').toLowerCase();
+            if (type === 'checkbox' || type === 'radio') {
+                schedule(150);
+            } else if (type === 'number' || type === 'search' || type === 'text') {
+                schedule(600);
+            } else {
+                schedule(300);
+            }
         });
-    }
-    d.addEventListener('click', function (e) {
-        var btn = e.target.closest('[data-yv-wish]');
-        if (!btn) return;
-        e.preventDefault();
-        e.stopPropagation();
-        var id = btn.dataset.productId;
-        if (!id) return;
-        var list = getWish();
-        var idx = list.indexOf(id);
-        if (idx === -1) list.push(id);
-        else list.splice(idx, 1);
-        saveWish(list);
-        refreshWishButtons();
-    });
-    refreshWishButtons();
+
+        form.addEventListener('input', function (e) {
+            var target = e.target;
+            if (!target || !target.name) return;
+            var type = (target.type || '').toLowerCase();
+            if (type === 'number' || type === 'search' || type === 'text') {
+                schedule(600);
+            }
+        });
+
+        // Si l'utilisateur submit manuellement (clic Appliquer en no-JS ou Enter) -> laisser passer
+        form.addEventListener('submit', function () {
+            if (debounceTimer) { clearTimeout(debounceTimer); debounceTimer = null; }
+            var pagedInput = form.querySelector('input[name="paged"]');
+            if (pagedInput) pagedInput.parentNode.removeChild(pagedInput);
+        });
+    })();
+
 })(window, document);

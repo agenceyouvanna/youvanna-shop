@@ -153,9 +153,9 @@ get_header();
                     <form class="yv-shop-single__form" data-yv-shop-add-form>
                         <?php if ($lens_on): ?>
                             <div class="yv-shop-single__actions">
-                                <button type="button" class="yv-shop-btn yv-shop-btn--ghost yv-shop-btn--wish" data-yv-wish data-product-id="<?php echo (int) $product->id; ?>">
+                                <button type="button" class="yv-shop-btn yv-shop-btn--ghost yv-shop-btn--wish" data-yv-wish-toggle="<?php echo (int) $product->id; ?>" aria-pressed="false" aria-label="<?php esc_attr_e('Ajouter aux coups de coeur', 'yv-shop'); ?>" data-label-active="<?php esc_attr_e('Retirer des coups de coeur', 'yv-shop'); ?>" data-label-inactive="<?php esc_attr_e('Ajouter aux coups de coeur', 'yv-shop'); ?>">
                                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
-                                    <?php esc_html_e('Ajouter aux coups de coeur', 'yv-shop'); ?>
+                                    <span data-yv-wish-label><?php esc_html_e('Ajouter aux coups de coeur', 'yv-shop'); ?></span>
                                 </button>
                             </div>
                             <div class="yv-shop-single__actions">
@@ -180,9 +180,9 @@ get_header();
                             <?php endif; ?>
                         <?php else: ?>
                             <div class="yv-shop-single__actions">
-                                <button type="button" class="yv-shop-btn yv-shop-btn--ghost yv-shop-btn--wish" data-yv-wish data-product-id="<?php echo (int) $product->id; ?>">
+                                <button type="button" class="yv-shop-btn yv-shop-btn--ghost yv-shop-btn--wish" data-yv-wish-toggle="<?php echo (int) $product->id; ?>" aria-pressed="false" aria-label="<?php esc_attr_e('Ajouter aux coups de coeur', 'yv-shop'); ?>" data-label-active="<?php esc_attr_e('Retirer des coups de coeur', 'yv-shop'); ?>" data-label-inactive="<?php esc_attr_e('Ajouter aux coups de coeur', 'yv-shop'); ?>">
                                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
-                                    <?php esc_html_e('Ajouter aux coups de coeur', 'yv-shop'); ?>
+                                    <span data-yv-wish-label><?php esc_html_e('Ajouter aux coups de coeur', 'yv-shop'); ?></span>
                                 </button>
                             </div>
                             <div class="yv-shop-single__actions yv-shop-single__actions--cart">

@@ -9,22 +9,22 @@ abstract class Controller
 
     abstract public function register_routes(): void;
 
-    protected function permission_public(): bool
+    public function permission_public(): bool
     {
         return true;
     }
 
-    protected function permission_admin(): bool
+    public function permission_admin(): bool
     {
         return current_user_can('yv_shop_manage_settings');
     }
 
-    protected function permission_manage_products(): bool
+    public function permission_manage_products(): bool
     {
         return current_user_can('yv_shop_manage_products');
     }
 
-    protected function permission_manage_orders(): bool
+    public function permission_manage_orders(): bool
     {
         return current_user_can('yv_shop_manage_orders');
     }

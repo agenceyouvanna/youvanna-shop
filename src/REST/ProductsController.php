@@ -34,6 +34,46 @@ final class ProductsController extends Controller
 
     public function list(\WP_REST_Request $req): \WP_REST_Response
     {
+        // Mode "by ids" : utilisé par la page /coups-de-coeur/ (JS wishlist).
+        // Hydrate les produits depuis leurs IDs client-side sans scanner la DB.
+        $ids_param = $req->get_param('ids');
+        if ($ids_param !== null && $ids_param !== '') {
+            $ids = [];
+            if (is_array($ids_param)) {
+                foreach ($ids_param as $v) {
+                    $n = (int) $v;
+                    if ($n > 0) $ids[] = $n;
+                }
+            } else {
+                foreach (explode(',', (string) $ids_param) as $v) {
+                    $n = (int) trim($v);
+                    if ($n > 0) $ids[] = $n;
+                }
+            }
+            $ids = array_values(array_unique($ids));
+            // Cap raisonnable pour éviter l'abus
+            if (count($ids) > 200) {
+                $ids = array_slice($ids, 0, 200);
+            }
+            $repo = new ProductRepository();
+            $items = [];
+            foreach ($ids as $id) {
+                $p = $repo->find($id);
+                if ($p && $p->status === 'published') {
+                    $items[] = $p->toListDto();
+                }
+            }
+            $response = new \WP_REST_Response([
+                'items'       => $items,
+                'total'       => count($items),
+                'total_pages' => 1,
+                'page'        => 1,
+                'per_page'    => count($items),
+            ]);
+            $response->header('Cache-Control', 'public, max-age=60, stale-while-revalidate=300');
+            return $response;
+        }
+
         $criteria = SearchCriteria::fromRequest($req);
         $repo = new ProductRepository();
         $result = $repo->search($criteria);

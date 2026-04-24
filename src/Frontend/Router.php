@@ -188,6 +188,9 @@ final class Router
 
         wp_enqueue_script('yv-shop-mini-cart', $base . 'mini-cart.js', ['yv-shop-store'], $ver, true);
 
+        // Wishlist : enqueue globalement (navbar badge + toggles cards/single + page /coups-de-coeur/)
+        wp_enqueue_script('yv-shop-wishlist', $base . 'wishlist.js', ['yv-shop-store'], $ver, true);
+
         if (!$this->context) {
             return;
         }

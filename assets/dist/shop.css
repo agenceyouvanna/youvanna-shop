@@ -1719,3 +1719,108 @@ html.yv-shop-lightbox-open { overflow: hidden; }
     transition: background .15s;
 }
 .yv-shop-lightbox__close:hover { background: rgba(255, 255, 255, .25); }
+
+/* ==================================================================
+   Filtres : bouton Appliquer masqué quand JS actif (fallback no-JS)
+   ================================================================== */
+.yv-shop-filters__actions.is-js-hidden { display: none; }
+
+/* Feedback visuel pendant un submit auto-apply */
+.yv-shop-archive__grid.is-loading,
+.yv-shop-grid.is-loading { opacity: .5; transition: opacity .15s ease; pointer-events: none; }
+
+/* ==================================================================
+   Wishlist : page /coups-de-coeur/
+   ================================================================== */
+.yv-shop-wishlist { max-width: 1280px; margin: 0 auto; padding: 2rem 1rem 4rem; }
+.yv-shop-wishlist__intro { margin-bottom: 1.5rem; }
+.yv-shop-wishlist__hint {
+    color: var(--yv-shop-color-muted);
+    font-size: .95rem;
+    margin: 0;
+}
+.yv-shop-wishlist__content { min-height: 200px; }
+
+.yv-shop-wishlist-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+    gap: 1.5rem;
+}
+
+.yv-shop-wishlist-empty {
+    text-align: center;
+    padding: 3rem 1rem;
+    color: var(--yv-shop-color-muted);
+}
+.yv-shop-wishlist-empty svg {
+    color: var(--yv-shop-color-muted);
+    opacity: .5;
+    margin-bottom: 1rem;
+}
+.yv-shop-wishlist-empty p {
+    font-size: 1.05rem;
+    margin: 0 0 1.5rem;
+}
+
+.yv-shop-wishlist-loading,
+.yv-shop-wishlist-error {
+    text-align: center;
+    padding: 2rem 1rem;
+    color: var(--yv-shop-color-muted);
+    font-size: .95rem;
+}
+.yv-shop-wishlist-error { color: var(--yv-shop-color-sale, #c0392b); }
+
+/* Swap svg fill quand la card wishlist est déjà "active" (toutes le sont sur la page) */
+.yv-shop-wishlist-card .yv-shop-card__wish svg {
+    fill: var(--yv-shop-color-primary);
+    stroke: var(--yv-shop-color-primary);
+}
+
+/* ==================================================================
+   Wishlist : icône navbar (thème)
+   Ces règles sont chargées par le plugin pour garantir la présence
+   même si le thème starter n'est pas là (ex: sous-site custom).
+   ================================================================== */
+.nav-wishlist {
+    -webkit-appearance: none;
+    appearance: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    box-sizing: border-box;
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    margin: 0;
+    border: 0;
+    background: transparent;
+    color: inherit;
+    cursor: pointer;
+    border-radius: 999px;
+    line-height: 1;
+    text-decoration: none;
+    transition: background .15s;
+}
+.nav-wishlist:hover { background: rgba(0,0,0,.06); }
+.nav-wishlist > svg { width: 22px; height: 22px; display: block; flex-shrink: 0; }
+.nav-wishlist__count {
+    position: absolute;
+    top: -2px;
+    right: -4px;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 5px;
+    box-sizing: border-box;
+    border-radius: 9px;
+    background: var(--color-primary, var(--yv-shop-color-primary, #222));
+    color: var(--color-primary-contrast, var(--yv-shop-color-primary-contrast, #fff));
+    font-size: 11px;
+    font-weight: 700;
+    line-height: 18px;
+    text-align: center;
+    pointer-events: none;
+    border: 2px solid var(--color-background, #fff);
+}
+.nav-wishlist__count.is-empty { display: none; }

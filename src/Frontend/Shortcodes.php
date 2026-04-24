@@ -11,6 +11,7 @@ final class Shortcodes
         add_shortcode('yv_shop_cart', [$this, 'cart']);
         add_shortcode('yv_shop_checkout', [$this, 'checkout']);
         add_shortcode('yv_shop_mini_cart', [$this, 'miniCart']);
+        add_shortcode('yv_shop_wishlist', [$this, 'wishlist']);
     }
 
     public function shop(array $atts = []): string
@@ -31,5 +32,10 @@ final class Shortcodes
     public function miniCart(array $atts = []): string
     {
         return TemplateLoader::get('parts/mini-cart.php', ['atts' => $atts]);
+    }
+
+    public function wishlist(array $atts = []): string
+    {
+        return TemplateLoader::get('wishlist.php', ['atts' => $atts]);
     }
 }
